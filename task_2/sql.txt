@@ -1,0 +1,45 @@
+CREATE TABLE tabela1 (
+part_number VARCHAR(7),
+manufacturer VARCHAR(255),
+price DECIMAL(10,2),
+quantity VARCHAR(3));
+.mode csv
+.import 'C:/Users/nice2/Downloads/Re_Mlodszy_inzynier_danych/first_task/price_list.csv' tabela1
+CREATE TABLE tabela2 (
+part_number VARCHAR(7),
+manufacturer VARCHAR(255),
+price VARCHAR(25));
+.mode csv
+.separator ";"
+.import 'C:/Users/nice2/Downloads/Re_Mlodszy_inzynier_danych/first_task/sample_supplier2.csv' tabela2
+ALTER TABLE tabela1
+DROP COLUMN quantity;
+ALTER TABLE tabela1
+ADD COLUMN dostawca INTEGER DEFAULT 1;
+ALTER TABLE tabela2
+ADD COLUMN dostawca INTEGER DEFAULT 2;
+UPDATE tabela1
+SET price = REPLACE(price, ',', '.');
+
+CREATE TABLE raport AS
+SELECT * FROM tabela1;
+INSERT INTO raport
+SELECT * FROM tabela2;
+
+CREATE TABLE report AS
+SELECT part_number, manufacturer, price, dostawca
+FROM (
+  SELECT
+    part_number,
+    manufacturer,
+    price,
+    dostawca,
+    ROW_NUMBER() OVER (PARTITION BY part_number, manufacturer ORDER BY price ASC) AS row_num
+  FROM raport
+) ranked_rows
+WHERE row_num = 1;
+
+.mode csv
+.headers on
+.output 'C:/Users/nice2/Downloads/Re_Mlodszy_inzynier_danych/first_task/porownanie_sql.csv'
+SELECT * FROM report;
